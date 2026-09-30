@@ -4,10 +4,11 @@ import Scaleflow.model.JobStatus;
 import Scaleflow.model.OperationType;
 
 public class JobResponse {
-    Long id;
+    private Long id;
     private String fileName;
     private OperationType operation;
     private JobStatus status;
+    private String inputPath;
     private String outputPath;
 
     public Long getId() {
@@ -72,6 +73,21 @@ public class JobResponse {
      */
     public void setOutputPath(String outputPath) {
         this.outputPath = outputPath;
+    }
+
+
+    /**
+     * @return String return the inputPath
+     */
+    public String getInputPath() {
+        return inputPath;
+    }
+
+    /**
+     * @param inputPath the inputPath to set
+     */
+    public void setInputPath(String inputPath) {
+        this.inputPath = inputPath;
     }
 
 }

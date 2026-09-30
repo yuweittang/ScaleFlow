@@ -1,6 +1,5 @@
 package Scaleflow.model;
 
-import jakarta.annotation.Generated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -14,7 +13,7 @@ import jakarta.persistence.Table;
 public class Job {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private Long id;
     private String fileName;
 
     @Enumerated(EnumType.STRING)
@@ -22,6 +21,9 @@ public class Job {
 
     @Enumerated(EnumType.STRING)
     private JobStatus status;
+
+    private String inputPath;
+    private String outputPath;
 
     /**
      * 
@@ -80,6 +82,35 @@ public class Job {
      */
     public void setStatus(JobStatus status) {
         this.status = status;
+    }
+
+
+    /**
+     * @return String return the inputPath
+     */
+    public String getInputPath() {
+        return inputPath;
+    }
+
+    /**
+     * @param inputPath the inputPath to set
+     */
+    public void setInputPath(String inputPath) {
+        this.inputPath = inputPath;
+    }
+
+    /**
+     * @return String return the outputPath
+     */
+    public String getOutputPath() {
+        return outputPath;
+    }
+
+    /**
+     * @param outputPath the outputPath to set
+     */
+    public void setOutputPath(String outputPath) {
+        this.outputPath = outputPath;
     }
 
 }
