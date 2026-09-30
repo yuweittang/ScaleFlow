@@ -23,12 +23,15 @@ public class JobService {
         job.setFileName(request.getFileName());
         job.setOperation(request.getOperation());
         job.setStatus(JobStatus.QUEUED);
+        job.setInputPath(request.getInputPath());
 
         Job savedjob = jobRepo.save(job);
 
         //create a job response for return info
         JobResponse response=toResponse(savedjob);
 
+        //return output path
+        response.setOutputPath(job.getOutputPath());
         //handle the process to 
         jobWorker.processJob(savedjob.getId());
         return response;
@@ -45,6 +48,8 @@ public class JobService {
         jobResponse.setFileName(job.getFileName());
         jobResponse.setOperation(job.getOperation());
         jobResponse.setStatus(job.getStatus());
+        jobResponse.setInputPath(job.getInputPath());
+        jobResponse.setOutputPath(job.getOutputPath());
 
         return jobResponse;
     }
