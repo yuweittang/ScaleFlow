@@ -5,6 +5,7 @@ import Scaleflow.model.OperationType;
 public class CreateJobRequest {
     private String fileName;
     private OperationType operation;
+    private String inputPath;
 
     /**
      * @return String return the operation
@@ -32,6 +33,21 @@ public class CreateJobRequest {
      */
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+
+    /**
+     * @return String return the inputpath
+     */
+    public String getInputPath() {
+        return inputPath;
+    }
+
+    /**
+     * @param inputPath the inputpath to set
+     */
+    public void setInputPath(String inputPath) {
+        this.inputPath = inputPath;
     }
 
 }
