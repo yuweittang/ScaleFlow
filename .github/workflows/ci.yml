@@ -23,13 +23,15 @@ jobs:
                 distribution: temurin
                 java-version: "21"
                 cache: maven
-
+            
+            - name: Start PostgreSQL and Kafka
+              run: docker compose up -d postgres kafka
             - name: Wait for PostgreSQL
               run: |
                 timeout 90s bash -c '
-                    until docker compose exec -T postgres pg_isready -U postgres -d scaleflow; dp 
+                    until docker compose exec -T postgres pg_isready -U postgres -d scaleflow; do
                         sleep 2
-                    done
+                done
                 '
             
             - name: Wait for Kafka
