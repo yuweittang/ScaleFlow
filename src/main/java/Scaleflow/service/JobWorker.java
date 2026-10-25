@@ -7,7 +7,6 @@ import Scaleflow.repository.JobRepository;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 
 @Service 
 public class JobWorker {
@@ -23,7 +22,6 @@ public class JobWorker {
 
     }
 
-    @Async  /**run in backstage thread */
     public void processJob(Long jobId){
         Job job=jobRepo.findById(jobId)
                 .orElseThrow(()-> 
