@@ -1,5 +1,7 @@
 package Scaleflow.model;
 
+import java.time.Instant;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -24,7 +26,10 @@ public class Job {
 
     private String inputPath;
     private String outputPath;
-
+    //Determines when another worker can reclaim the job
+    private Instant leaseExpiresAt;
+    //Identifies the current owner, preventing an old worker from saving over a newer attempt
+    private String claimToken;
     /**
      * 
      * @param id the id to set
@@ -111,6 +116,35 @@ public class Job {
      */
     public void setOutputPath(String outputPath) {
         this.outputPath = outputPath;
+    }
+
+
+    /**
+     * @return Instant return the leaseExpiresAt
+     */
+    public Instant getLeaseExpiresAt() {
+        return leaseExpiresAt;
+    }
+
+    /**
+     * @param leaseExpiresAt the leaseExpiresAt to set
+     */
+    public void setLeaseExpiresAt(Instant leaseExpiresAt) {
+        this.leaseExpiresAt = leaseExpiresAt;
+    }
+
+    /**
+     * @return String return the claimToken
+     */
+    public String getClaimToken() {
+        return claimToken;
+    }
+
+    /**
+     * @param claimToken the claimToken to set
+     */
+    public void setClaimToken(String claimToken) {
+        this.claimToken = claimToken;
     }
 
 }
