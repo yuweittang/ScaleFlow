@@ -9,10 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+
 
 @Service
 public class JobWorker {
@@ -23,15 +27,18 @@ public class JobWorker {
     private final ThumbnailService thumbnailService;
     private final JobRepository jobRepo;
     private final Duration leaseDuration;
+    private final StringRedisTemplate redisTemplate;
 
     public JobWorker(
             JobRepository jobRepo,
             ThumbnailService thumbnailService,
-            @Value("${jobs.lease-duration:PT5M}") Duration leaseDuration
+            @Value("${jobs.lease-duration:PT5M}") Duration leaseDuration,
+            StringRedisTemplate redisTemplate
     ) {
         this.jobRepo = jobRepo;
         this.thumbnailService = thumbnailService;
         this.leaseDuration = leaseDuration;
+        this.redisTemplate=redisTemplate;
     }
 
     public void processJob(Long jobId) {
@@ -67,6 +74,8 @@ public class JobWorker {
             // Recovery will resubmit expired PROCESSING jobs.
             return;
         }
+        // invalidate cache after commit 
+        invalidateCacheAfterCommit(jobId);
 
         try {
             Job job = jobRepo.findById(jobId)
@@ -83,7 +92,8 @@ public class JobWorker {
 
             String outputPath = thumbnailService.generateThumbnail(
                     job.getInputPath(),
-                    jobId
+                    jobId,
+                    token
             );
 
             int completed = jobRepo.completedJob(
@@ -104,7 +114,9 @@ public class JobWorker {
                 return;
             }
 
+            invalidateCacheAfterCommit(jobId);
             log.info("Completed job: {}", jobId);
+
 
         } catch (Exception e) {
             int failed = jobRepo.failJob(
@@ -125,6 +137,7 @@ public class JobWorker {
                 return;
             }
 
+            invalidateCacheAfterCommit(jobId);
             log.error("Job failed: {}", jobId, e);
 
             // Propagate the original cause so Kafka can retry.
@@ -132,6 +145,31 @@ public class JobWorker {
                     "Job processing failed: " + jobId,
                     e
             );
+        }
+    }
+
+    private void invalidateCache(Long jobId){
+        try{
+            redisTemplate.delete("job:"+jobId);
+            log.info("Invalidated cache for job {}", jobId);
+        }catch(RuntimeException e){
+            //redis failure must not turn successful processing into a retry
+            log.warn("Cache invalidate failed for job {}",jobId,e);
+        }
+    }
+    //If a Spring transaction is still active, this schedules deletion after commit. Otherwise, it deletes right now
+    private void invalidateCacheAfterCommit(Long jobId){
+        if(TransactionSynchronizationManager.isSynchronizationActive()){
+            TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override 
+                    public void afterCommit(){
+                        invalidateCache(jobId);
+                    }
+                }
+            );
+        }else{
+            invalidateCache(jobId);
         }
     }
 }

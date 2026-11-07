@@ -11,7 +11,10 @@ import org.springframework.stereotype.Service;
 
 @Service 
 public class ThumbnailService {
-    public String generateThumbnail(String inputPath,Long jobId)
+    public String generateThumbnail(
+            String inputPath,
+            Long jobId,
+            String claimToken)
             throws IOException{
 
         if(inputPath==null||inputPath.isBlank()){
@@ -49,7 +52,7 @@ public class ThumbnailService {
         Path outputDirectory=Path.of("outputs");
         Files.createDirectories(outputDirectory);
 
-        Path outputPath=outputDirectory.resolve(jobId+"_thumbnail.png");
+        Path outputPath=outputDirectory.resolve(jobId+"-"+claimToken+"_thumbnail.png");
 
         boolean written=ImageIO.write(thumbnImage, "png", outputPath.toFile());
 

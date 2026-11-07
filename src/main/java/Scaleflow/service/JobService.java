@@ -11,20 +11,37 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+import tools.jackson.databind.json.JsonMapper;;
 
 @Service
 public class JobService {
     private final JobRepository jobRepo;
     // private final JobWorker jobWorker;
     private final JobProducer jobProducer;
+    private static final Logger log=LoggerFactory.getLogger(JobService.class);
+    private final StringRedisTemplate redisTemplate;
+    private final JsonMapper jsonMapper;
 
-    public JobService(JobRepository jobRepository,JobProducer jobProducer) {
+    public JobService(
+        JobRepository jobRepository,
+        JobProducer jobProducer,
+        StringRedisTemplate redisTemplate,
+        JsonMapper jsonMapper) {
         this.jobRepo = jobRepository;
         // this.jobWorker=jobWorker;
         this.jobProducer=jobProducer;
+        this.redisTemplate=redisTemplate;
+        this.jsonMapper=jsonMapper;
     }
 
     public JobResponse createJob(CreateJobRequest request) {
@@ -67,8 +84,40 @@ public class JobService {
 
 
     public JobResponse getJob(Long id) {
-        Job job = jobRepo.findById(id).orElseThrow(() -> new RuntimeException("Job not found:" + id));
-        return toResponse(job);
+        String key="job:"+id;
+
+        //Try Redis first
+        try{
+            String cachedJson=redisTemplate.opsForValue().get(key);
+            
+            //record exist in cache
+            if(cachedJson!=null){
+                JobResponse cachedJobResponse=jsonMapper.readValue(cachedJson,JobResponse.class);
+
+                log.info("Cache HIT for job {}",id);
+                return cachedJobResponse;
+            }
+
+            log.info("Cache MISS for job {}",id);
+        }catch(RuntimeException e){
+            log.warn("Cache read failed for job {}; using database", id ,e);
+        }
+
+        Job job = jobRepo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found: "+id));
+
+        JobResponse response=toResponse(job);
+        //cache the response for 5 seconds
+        try{
+            String json=jsonMapper.writeValueAsString(response);
+            redisTemplate.opsForValue().set(
+                key, 
+                json,
+                Duration.ofSeconds(5)
+                );
+        }catch (RuntimeException e){
+            log.warn("Cache write failed for job {}", id ,e);
+        }
+        return response;
     }
 
     private JobResponse toResponse(Job job) {

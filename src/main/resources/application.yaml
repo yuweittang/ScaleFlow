@@ -28,5 +28,11 @@ spring:
     listener:
       acl-mode: record
 
+    redis:
+      host: localhost
+      port: 6379
+      connect-timeout: 500ms
+      timeout: 500ms
+
 server:
   port: 8080
