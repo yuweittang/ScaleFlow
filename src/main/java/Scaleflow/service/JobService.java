@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -102,7 +103,7 @@ public class JobService {
             log.warn("Cache read failed for job {}; using database", id ,e);
         }
 
-        Job job = jobRepo.findById(id).orElseThrow(() -> new RuntimeException("Job not found:" + id));
+        Job job = jobRepo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found: "+id));
 
         JobResponse response=toResponse(job);
         //cache the response for 5 seconds

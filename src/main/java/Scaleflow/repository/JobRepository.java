@@ -63,7 +63,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
             @Param("completed") JobStatus completed
     );
 
-    //Label failed when status is processing but the task expired
+    //Label failed when status is processing but the task failed
     @Modifying(clearAutomatically = true)
     @Transactional
     @Query("""
